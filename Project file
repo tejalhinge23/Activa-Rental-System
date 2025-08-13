@@ -1,0 +1,152 @@
+# Program
+
+fix_activa = 20
+storage_activa = 20
+charge = 500
+database = {}
+
+# Show Terms and Conditions
+def t_and_c():
+    return f"""T&C:
+1. Aadhaar Card is Mandatory.
+2. Driving Licence is Mandatory.
+3. One Activa for One Day: ₹{charge}/-"""
+
+# Generate and Save Bill
+def print_bill(*data):
+    info = f"""
+Welcome to Activa Rental House
+-------------------------------------------
+T&C:
+1. Aadhaar Card is Mandatory.
+2. Driving Licence is Mandatory.
+3. One Activa for One Day: ₹{charge}/-
+-----------------------------------------
+Name                : {data[0]}
+Phone No            : {data[1]}
+Address             : {data[2]}
+Aadhaar No          : {data[3]}
+Driving Licence No  : {data[4]}
+No. of Rent Activa  : {data[5]}
+No. of Days Booked  : {data[6]}
+-----------------------------------------
+Total Bill          : ₹{data[7]}
+Thank you for choosing Cyber Success!
+"""
+    file_name = data[0].replace(" ", "_") + "_bill.txt"
+    with open(file_name, "w", encoding="utf-8") as p:
+        p.write(info)
+    print(f" Bill saved as: {file_name}")
+
+# Store rental info in database
+def rent_database_entry(*data):
+    global storage_activa
+    aadhaar = data[3]
+    if aadhaar not in database:
+        database[aadhaar] = {
+            'name': data[0],
+            'phone': data[1],
+            'address': data[2],
+            'drive_l': data[4],
+            'rent_no_activa': data[5],
+            'no_day': data[6],
+            'bill': data[7],
+            'Status': "Rented"
+        }
+    else:
+        database[aadhaar]["rent_no_activa"] += data[5]
+        database[aadhaar]["no_day"] += data[6]
+        database[aadhaar]["bill"] += data[7]
+        database[aadhaar]["Status"] = "Rented"
+
+    storage_activa -= data[5]
+
+# Collect User Rental Info
+def rent_user_info(rent_no_activa):
+    global storage_activa
+    name = input("Enter Your Name: ")
+    phone = input("Enter Your Phone No: ")
+    address = input("Enter Your Address: ")
+    aadhaar = input("Enter Your Aadhaar No: ")
+    drive_l = input("Enter Your Driving Licence No: ")
+    no_day = int(input("Enter Number of Days for Booking: "))
+
+    bill = rent_no_activa * no_day * charge
+    print(f"\nYour bill: ₹{bill}")
+    confirm = input("Confirm Booking? (Y/N): ").lower()
+
+    if confirm == "y":
+        print("\n Booking Confirmed!")
+        print_bill(name, phone, address, aadhaar, drive_l, rent_no_activa, no_day, bill)
+        rent_database_entry(name, phone, address, aadhaar, drive_l, rent_no_activa, no_day, bill)
+    else:
+        print(" Booking Cancelled.")
+
+# Return Activa
+def return_activa():
+    global storage_activa
+    aadhaar = input("Enter Your Aadhaar No to Return Activa: ")
+    if aadhaar in database and database[aadhaar]["Status"] == "Rented":
+        return_count = int(input("Enter Number of Activas to Return: "))
+        if return_count <= database[aadhaar]["rent_no_activa"]:
+            database[aadhaar]["rent_no_activa"] -= return_count
+            storage_activa += return_count
+            if database[aadhaar]["rent_no_activa"] == 0:
+                database[aadhaar]["Status"] = "Returned"
+            print(" Activa Returned Successfully.")
+        else:
+            print(" Return count exceeds rented count.")
+    else:
+        print(" No active rental found for this Aadhaar No.")
+
+# Owner Panel
+def owner_panel():
+    password = input("Enter Owner Password: ")
+    if password == "admin123":
+        print("\n All Rental Data:")
+        for aadhaar, info in database.items():
+            print(f"\nAadhaar: {aadhaar}")
+            for key, value in info.items():
+                print(f"{key} : {value}")
+    else:
+        print("Incorrect Password.")
+
+# Main Program
+print("Welcome to Cyber Success Activa Rental House")
+
+while True:
+    print(f"\n Available Activas: {storage_activa}/{fix_activa}")
+    choice = input("""
+Please choose an option:
+1. Rent Activa
+2. Return Activa
+3. Owner Panel
+4. Exit
+Enter your choice: """)
+
+    if choice == "1":
+        print("\n Terms and Conditions:")
+        print(t_and_c())
+        agree = input("Do you agree? (Y/N): ").lower()
+        if agree == "y":
+            rent_no = int(input("Enter number of Activas to Rent: "))
+            if rent_no <= storage_activa:
+                rent_user_info(rent_no)
+            else:
+                print(" Not enough Activas available.")
+        else:
+            print("Rental Cancelled.")
+
+    elif choice == "2":
+        return_activa()
+
+    elif choice == "3":
+        owner_panel()
+
+    elif choice == "4":
+        print(" Thank you for visiting Cyber Success Activa Rental House!")
+        break
+
+    else:
+        print("Invalid option, please try again.")
+
